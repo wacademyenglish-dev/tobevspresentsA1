@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WOLF LABS | My Daily Rhythm (A1)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        wolf: {
+                            dark: '#0B0F19',
+                            panel: '#151C2C',
+                            emerald: '#1DB954',
+                            accent: '#38bdf8'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        
+        body { background-color: #0B0F19; color: white; overflow: hidden; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0B0F19; }
+        ::-webkit-scrollbar-thumb { background: #1DB954; border-radius: 4px; }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.5s ease-in forwards; }
+        .slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Flip Card Base */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; transition: transform 0.6s; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        
+        /* Custom UI Elements */
+        .glass-panel {
+            background: rgba(21, 28, 44, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .correct-pulse { animation: correctPulse 1s infinite; }
+        @keyframes correctPulse {
+            0% { box-shadow: 0 0 0 0 rgba(29, 185, 84, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(29, 185, 84, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(29, 185, 84, 0); }
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen text-slate-100">
+
+    <!-- TOP NAVIGATION -->
+    <header class="glass-panel h-16 flex items-center justify-between px-6 z-50">
+        <div class="flex items-center gap-4">
+            <button onclick="toggleSidebar()" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+            <div class="font-bold tracking-widest text-sm text-gray-300">
+                WOLF LABS <span class="text-wolf-emerald mx-2">|</span> MAIN SERIES
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <button onclick="toggleTeacherBoard()" class="px-4 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-sm font-semibold text-emerald-400 border border-emerald-500/30 transition">
+                <i class="fas fa-chalkboard-teacher mr-2"></i> Teacher Board
+            </button>
+            <button onclick="toggleFullScreen()" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-expand text-xl"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN WORKSPACE -->
+    <div class="flex-1 flex overflow-hidden relative">
+        
+        <!-- RETRACTABLE DASHBOARD (SIDEBAR) -->
+        <aside id="sidebar" class="w-64 glass-panel absolute h-full z-40 transform -translate-x-full transition-transform duration-300 flex flex-col">
+            <div class="p-4 border-b border-white/10">
+                <h3 class="font-bold text-gray-200">Session Navigation</h3>
+            </div>
+            <div class="flex-1 overflow-y-auto p-2" id="nav-links">
+                <!-- Populated by JS -->
+            </div>
+        </aside>
+
+        <!-- TEACHER BOARD (RIGHT SLIDEOVER) -->
+        <aside id="teacher-board" class="w-80 glass-panel absolute right-0 h-full z-40 transform translate-x-full transition-transform duration-300 flex flex-col border-l border-white/10">
+            <div class="p-4 border-b border-white/10 bg-slate-800/50 flex justify-between items-center">
+                <h3 class="font-bold text-emerald-400"><i class="fas fa-bolt mr-2"></i>Live Tools</h3>
+                <button onclick="toggleTeacherBoard()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-4 flex-1 flex flex-col gap-4">
+                <div>
+                    <label class="text-xs text-gray-400 uppercase tracking-wider mb-2 block">Quick Vocabulary Insert</label>
+                    <input type="text" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:outline-none focus:border-emerald-500" placeholder="Type word here...">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 uppercase tracking-wider mb-2 block">Correction Board</label>
+                    <textarea class="w-full h-32 bg-slate-900 border border-slate-700 rounded p-2 text-sm focus:outline-none focus:border-emerald-500" placeholder="Student said: ...&#10;Better: ..."></textarea>
+                </div>
+                <button class="bg-emerald-600 hover:bg-emerald-500 text-white rounded p-2 text-sm font-bold mt-auto transition">
+                    Send to Student Screen
+                </button>
+            </div>
+        </aside>
+
+        <!-- SLIDE CONTAINER -->
+        <main id="slide-container" class="flex-1 relative overflow-y-auto overflow-x-hidden flex items-center justify-center">
+            <!-- Slides rendered here -->
+        </main>
+
+    </div>
+
+    <!-- FOOTER / PROGRESS -->
+    <footer class="h-24 glass-panel flex items-center justify-between px-8 z-50 border-t border-white/10">
+        <div class="w-1/3 flex justify-start">
+            <button onclick="prevSlide()" class="text-gray-400 hover:text-white transition px-6 py-3 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10 flex items-center gap-2 font-semibold">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+        </div>
+        
+        <div class="w-1/3 flex justify-center">
+            <button onclick="nextSlide()" class="bg-emerald-500 hover:bg-emerald-400 text-black px-12 py-4 rounded-full font-black text-xl shadow-[0_0_25px_rgba(29,185,84,0.5)] transition transform hover:scale-105 hover:-translate-y-1 flex items-center gap-3 border border-emerald-400">
+                NEXT <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <div class="w-1/3 flex justify-end items-center gap-4">
+            <div class="flex flex-col items-end">
+                <span id="step-counter" class="text-sm text-gray-300 font-mono font-bold">1/34</span>
+                <div class="w-32 h-2 mt-1 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                    <div id="progress-bar" class="h-full bg-emerald-500 transition-all duration-300 shadow-[0_0_10px_rgba(29,185,84,0.8)]" style="width: 5%;"></div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- INTERACTION LOGIC & DATA -->
+    <script>
+        // Data Structure for the 34 Steps
+        const slides = [
+            // ==========================================
+            // TEACHER GUIDE (Steps 1-3)
+            // ==========================================
+            {
+                title: "TG: Overview",
+                content: `
+                    <div class="max-w-4xl w-full p-8 slide-up">
+                        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-8 shadow-2xl">
+                            <h1 class="text-3xl font-bold text-emerald-400 mb-6 border-b border-slate-700 pb-4">TEACHER GUIDE <span class="text-white text-xl">| Overview</span></h1>
+                            <div class="grid grid-cols-2 gap-8">
+                                <div>
+                                    <h3 class="text-gray-400 text-sm uppercase tracking-wider mb-2">Topic</h3>
+                                    <p class="text-xl font-semibold mb-6">My Daily Rhythm (Daily Life & Habits)</p>
+                                    
+                                    <h3 class="text-gray-400 text-sm uppercase tracking-wider mb-2">Grammar Focus</h3>
+                                    <p class="text-xl font-semibold mb-6">Verb To Be & Simple Present</p>
+                                    
+                                    <h3 class="text-gray-400 text-sm uppercase tracking-wider mb-2">Target Level</h3>
+                                    <p class="text-xl font-semibold text-blue-400">A1 (Beginner - Insecure Profile)</p>
+                                </div>
+                                <div>
+                                    <h3 class="text-gray-400 text-sm uppercase tracking-wider mb-2">Duration</h3>
+                                    <p class="text-xl font-semibold mb-6">60 Minutes</p>
+                                    
+                                    <h3 class="text-gray-400 text-sm uppercase tracking-wider mb-2">Objectives</h3>
+                                    <ul class="list-disc list-inside text-gray-300 space-y-2">
+                                        <li>Student will confidently introduce themselves using 'To Be'.</li>
+                                        <li>Student will describe their basic daily routine.</li>
+                                        <li>Student will differentiate states (I am) vs actions (I do).</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "TG: Profile Strategy",
+                content: `
+                    <div class="max-w-4xl w-full p-8 slide-up">
+                        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-8 shadow-2xl">
+                            <h1 class="text-3xl font-bold text-emerald-400 mb-6 border-b border-slate-700 pb-4">TEACHER GUIDE <span class="text-white text-xl">| A1 Insecure Profile Strategy</span></h1>
+                            
+                            <div class="bg-blue-900/20 border border-blue-500/30 rounded-lg p-6 mb-6">
+                                <h2 class="text-blue-400 font-bold mb-2"><i class="fas fa-shield-alt mr-2"></i> Psychological Safety First</h2>
+                                <p class="text-gray-300">This student is insecure. Do not rush. Celebrate small wins. Over-praise correct pronunciation of basic words.</p>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-6">
+                                <div class="bg-slate-800 rounded p-5 border border-slate-700">
+                                    <h3 class="text-emerald-400 font-bold mb-3">DO THIS</h3>
+                                    <ul class="text-gray-300 space-y-2 text-sm">
+                                        <li><i class="fas fa-check text-emerald-500 mr-2"></i> Let them read before speaking.</li>
+                                        <li><i class="fas fa-check text-emerald-500 mr-2"></i> Use the UI visuals to point out rules.</li>
+                                        <li><i class="fas fa-check text-emerald-500 mr-2"></i> Smile, nod, and say "Exactly" often.</li>
+                                        <li><i class="fas fa-check text-emerald-500 mr-2"></i> Give them time to process (wait 3-5 seconds).</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-slate-800 rounded p-5 border border-slate-700">
+                                    <h3 class="text-red-400 font-bold mb-3">AVOID THIS</h3>
+                                    <ul class="text-gray-300 space-y-2 text-sm">
+                                        <li><i class="fas fa-times text-red-500 mr-2"></i> Interrupting mid-sentence to correct grammar.</li>
+                                        <li><i class="fas fa-times text-red-500 mr-2"></i> Using complex meta-language (don't say "auxiliary verb", say "helper word").</li>
+                                        <li><i class="fas fa-times text-red-500 mr-2"></i> Showing frustration if they forget "is/are".</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "TG: Interaction Logic",
+                content: `
+                    <div class="max-w-4xl w-full p-8 slide-up">
+                        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-8 shadow-2xl">
+                            <h1 class="text-3xl font-bold text-emerald-400 mb-6 border-b border-slate-700 pb-4">TEACHER GUIDE <span class="text-white text-xl">| Flow & STT Target</span></h1>
+                            
+                            <div class="flex items-center justify-between bg-slate-800 p-4 rounded-lg border border-slate-700 mb-8">
+                                <span class="font-bold text-gray-300">Target Student Talking Time (STT):</span>
+                                <span class="text-2xl font-black text-emerald-400">80%</span>
+                            </div>
+
+                            <h3 class="text-gray-400 text-sm uppercase tracking-wider mb-4">The Interaction Loop (Follow this strictly):</h3>
+                            
+                            <div class="flex items-center justify-between space-x-2 text-center text-sm font-semibold">
+                                <div class="bg-slate-800 p-4 rounded-lg flex-1 border border-slate-700 text-gray-300"><i class="fas fa-mouse-pointer block text-xl mb-2 text-blue-400"></i>1. Prompt</div>
+                                <i class="fas fa-arrow-right text-gray-500"></i>
+                                <div class="bg-slate-800 p-4 rounded-lg flex-1 border border-slate-700 text-gray-300"><i class="fas fa-user block text-xl mb-2 text-emerald-400"></i>2. Student Acts</div>
+                                <i class="fas fa-arrow-right text-gray-500"></i>
+                                <div class="bg-slate-800 p-4 rounded-lg flex-1 border border-slate-700 text-gray-300"><i class="fas fa-check-circle block text-xl mb-2 text-green-400"></i>3. Validation</div>
+                                <i class="fas fa-arrow-right text-gray-500"></i>
+                                <div class="bg-emerald-900/30 p-4 rounded-lg flex-1 border border-emerald-500/50 text-emerald-300"><i class="fas fa-comments block text-xl mb-2"></i>4. Speak Starter</div>
+                            </div>
+                            
+                            <p class="text-gray-400 text-sm mt-6 text-center">Every interaction on the screen unlocks a "Follow-up Question" for you to ask. Use them to bridge grammar into reality.</p>
+                        </div>
+                    </div>
+                `
+            },
+
+            // ==========================================
+            // COVER (Step 4)
+            // ==========================================
+            {
+                title: "Cover",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1DB954] via-[#0f3b20] to-[#020617] slide-up">
+                        <div class="text-center">
+                            <h2 class="text-emerald-300 tracking-[0.3em] font-bold text-sm mb-4">WOLF LABS | MAIN SERIES | A1</h2>
+                            <h1 class="text-7xl md:text-9xl font-black text-white mb-6 tracking-tight shadow-black drop-shadow-2xl">
+                                MY DAILY<br>RHYTHM
+                            </h1>
+                            <p class="text-2xl text-emerald-100 font-light mt-4">States, Actions, and Life.</p>
+                            
+                            <button onclick="nextSlide()" class="mt-12 px-8 py-4 bg-white text-emerald-900 rounded-full font-bold text-lg hover:bg-gray-200 transition transform hover:scale-105 shadow-[0_0_30px_rgba(29,185,84,0.5)]">
+                                Start Session
+                            </button>
+                        </div>
+                    </div>
+                `
+            },
+
+            // ==========================================
+            // WARM-UP (Steps 5-6)
+            // ==========================================
+            {
+                title: "Warm-up: Mood",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-900 via-slate-900 to-black slide-up p-4 md:p-8">
+                        <h2 class="text-3xl md:text-5xl font-bold mb-8 text-center text-white">How are you today?</h2>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-4xl">
+                            <button onclick="selectMood(this, 'I am tired today.', 'Why are you tired? Did you sleep well?')" class="mood-card group bg-slate-800/50 border border-white/10 p-6 rounded-2xl hover:bg-slate-700 hover:border-emerald-500 focus:bg-emerald-900/50 focus:border-emerald-500 transition duration-300 flex flex-col items-center gap-4">
+                                <span class="text-5xl group-hover:scale-110 transition">😴</span>
+                                <span class="text-xl font-bold text-gray-300 group-hover:text-white">Tired</span>
+                            </button>
+                            <button onclick="selectMood(this, 'I am great today!', 'That is wonderful! What is making you feel great?')" class="mood-card group bg-slate-800/50 border border-white/10 p-6 rounded-2xl hover:bg-slate-700 hover:border-emerald-500 focus:bg-emerald-900/50 focus:border-emerald-500 transition duration-300 flex flex-col items-center gap-4">
+                                <span class="text-5xl group-hover:scale-110 transition">🤩</span>
+                                <span class="text-xl font-bold text-gray-300 group-hover:text-white">Great</span>
+                            </button>
+                            <button onclick="selectMood(this, 'I am a little nervous.', 'It is okay! English class is a safe space. Take a deep breath.')" class="mood-card group bg-slate-800/50 border border-white/10 p-6 rounded-2xl hover:bg-slate-700 hover:border-emerald-500 focus:bg-emerald-900/50 focus:border-emerald-500 transition duration-300 flex flex-col items-center gap-4">
+                                <span class="text-5xl group-hover:scale-110 transition">😬</span>
+                                <span class="text-xl font-bold text-gray-300 group-hover:text-white">Nervous</span>
+                            </button>
+                            <button onclick="selectMood(this, 'I am fine, thank you.', 'Good! Are you ready to start our session?')" class="mood-card group bg-slate-800/50 border border-white/10 p-6 rounded-2xl hover:bg-slate-700 hover:border-emerald-500 focus:bg-emerald-900/50 focus:border-emerald-500 transition duration-300 flex flex-col items-center gap-4">
+                                <span class="text-5xl group-hover:scale-110 transition">🙂</span>
+                                <span class="text-xl font-bold text-gray-300 group-hover:text-white">Fine</span>
+                            </button>
+                        </div>
+
+                        <div id="mood-speak" class="hidden mt-8 p-6 bg-emerald-900/30 border border-emerald-500/50 rounded-xl max-w-2xl w-full text-center fade-in">
+                            <p id="mood-result" class="text-2xl font-bold text-emerald-400 mb-4"></p>
+                            <div class="pt-4 border-t border-emerald-500/30">
+                                <p class="text-gray-400 text-xs uppercase mb-1 tracking-wider">Teacher Follow-up</p>
+                                <p id="mood-followup" class="text-lg text-white font-light"></p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Warm-up: This or That",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-slate-950 slide-up p-8">
+                        <h2 class="text-4xl font-bold mb-4 text-center text-white">What is your morning rhythm?</h2>
+                        <p class="text-gray-400 mb-12">Choose one to reveal your sentence.</p>
+                        
+                        <div class="flex gap-8 max-w-4xl w-full">
+                            <button onclick="revealChoice('choice-1', 'I am a coffee person. I drink coffee every day.')" class="flex-1 group relative rounded-3xl overflow-hidden aspect-square border-2 border-slate-800 hover:border-amber-500 transition-all duration-300">
+                                <div class="absolute inset-0 bg-black/40 group-hover:bg-black/10 transition z-10"></div>
+                                <img src="https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&q=80&w=800" class="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition duration-700">
+                                <div class="absolute inset-0 z-20 flex items-center justify-center">
+                                    <span class="text-4xl font-black text-white drop-shadow-lg">COFFEE</span>
+                                </div>
+                            </button>
+
+                            <button onclick="revealChoice('choice-1', 'I am a tea person. I drink tea in the morning.')" class="flex-1 group relative rounded-3xl overflow-hidden aspect-square border-2 border-slate-800 hover:border-green-500 transition-all duration-300">
+                                <div class="absolute inset-0 bg-black/40 group-hover:bg-black/10 transition z-10"></div>
+                                <img src="https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&q=80&w=800" class="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition duration-700">
+                                <div class="absolute inset-0 z-20 flex items-center justify-center">
+                                    <span class="text-4xl font-black text-white drop-shadow-lg">TEA</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <div id="choice-1-result" class="hidden mt-10 text-center fade-in">
+                            <p id="choice-1-text" class="text-3xl font-bold text-emerald-400 bg-slate-800/80 px-8 py-4 rounded-full border border-slate-700"></p>
+                            <div class="mt-6 p-4 bg-white/5 rounded-lg border border-white/10 text-gray-300 max-w-lg mx-auto">
+                                <span class="text-amber-400 font-bold">Speak:</span> What time do you drink it? Do you add sugar?
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+
+            // ==========================================
+            // VOCABULARY (Steps 7-8)
+            // ==========================================
+            {
+                title: "Vocab: Morning",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 via-slate-900 to-black slide-up p-8">
+                        <h2 class="text-3xl font-bold mb-2 text-white">Morning Actions</h2>
+                        <p class="text-gray-400 mb-8">Click the cards to reveal the action.</p>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-5xl w-full">
+                            ${generateFlipCard('🌅', 'wake up', 'What time?')}
+                            ${generateFlipCard('🚿', 'take a shower', 'Hot or cold?')}
+                            ${generateFlipCard('🥐', 'eat breakfast', 'What do you eat?')}
+                            ${generateFlipCard('🦷', 'brush teeth', 'How many times?')}
+                            ${generateFlipCard('👕', 'get dressed', 'Uniform or casual?')}
+                            ${generateFlipCard('🚗', 'go to work', 'Car or bus?')}
+                        </div>
+
+                        <div class="mt-12 text-center w-full max-w-2xl bg-slate-800/50 p-6 rounded-xl border border-white/10">
+                            <p class="text-emerald-400 font-bold mb-2">Speaking Starter:</p>
+                            <p class="text-xl">"What is the first thing you do when you wake up?"</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Vocab: Evening",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-900 via-slate-900 to-black slide-up p-8">
+                        <h2 class="text-3xl font-bold mb-2 text-white">Evening Actions</h2>
+                        <p class="text-gray-400 mb-8">Click the cards to reveal the action.</p>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-5xl w-full">
+                            ${generateFlipCard('🏠', 'come home', 'What time?')}
+                            ${generateFlipCard('🍳', 'cook dinner', 'Who cooks?')}
+                            ${generateFlipCard('📺', 'watch TV', 'What show?')}
+                            ${generateFlipCard('📚', 'read a book', 'Do you like reading?')}
+                            ${generateFlipCard('📱', 'check phone', 'Instagram or TikTok?')}
+                            ${generateFlipCard('🛏️', 'go to sleep', 'Are you tired?')}
+                        </div>
+
+                        <div class="mt-12 text-center w-full max-w-2xl bg-slate-800/50 p-6 rounded-xl border border-white/10">
+                            <p class="text-emerald-400 font-bold mb-2">Speaking Starter:</p>
+                            <p class="text-xl">"What time do you usually go to sleep?"</p>
+                        </div>
+                    </div>
+                `
+            },
+
+            // ==========================================
+            // INPUT (Steps 9-10)
+            // ==========================================
+            {
+                title: "Input: Meet Emma",
+                content: `
+                    <div class="w-full h-full flex items-center justify-center bg-slate-950 slide-up p-8">
+                        <div class="max-w-5xl w-full flex bg-slate-900 rounded-3xl overflow-hidden border border-slate-800 shadow-2xl">
+                            <div class="w-2/5 relative">
+                                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=800" class="absolute inset-0 w-full h-full object-cover">
+                            </div>
+                            <div class="w-3/5 p-12 flex flex-col justify-center">
+                                <h2 class="text-4xl font-bold text-white mb-6">Meet Emma</h2>
+                                <div class="space-y-4 text-xl text-gray-300 leading-relaxed font-light">
+                                    <p>"Hello! I <span class="font-bold text-white">am</span> Emma. I <span class="font-bold text-white">am</span> 28 years old."</p>
+                                    <p>"I <span class="font-bold text-white">am</span> a graphic designer. I <span class="font-bold text-white">work</span> at home."</p>
+                                    <p>"My mornings <span class="font-bold text-white">are</span> very quiet. I <span class="font-bold text-white">drink</span> tea and I <span class="font-bold text-white">read</span> the news."</p>
+                                </div>
+                                
+                                <button onclick="document.getElementById('emma-speak-1').classList.remove('hidden')" class="mt-8 self-start px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold transition">
+                                    Analyze <i class="fas fa-search ml-2"></i>
+                                </button>
+
+                                <div id="emma-speak-1" class="hidden mt-6 p-4 bg-emerald-900/20 border-l-4 border-emerald-500 text-emerald-100 fade-in text-sm">
+                                    <span class="font-bold">Teacher:</span> Read the text together. Ask: "Are you a designer? Do you work at home?"
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Input: Emma's Routine",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-slate-950 slide-up p-8">
+                        <div class="max-w-4xl w-full bg-slate-900 p-12 rounded-3xl border border-slate-800 shadow-2xl">
+                            <h2 class="text-3xl font-bold text-center text-white mb-8 border-b border-slate-800 pb-4">Emma's Busy Day</h2>
+                            
+                            <div class="space-y-6 text-2xl text-center text-gray-300 font-light">
+                                <p>She <span class="font-bold text-blue-400">starts</span> work at 9:00 AM.</p>
+                                <p>She <span class="font-bold text-blue-400">is</span> very focused.</p>
+                                <p>She <span class="font-bold text-blue-400">does not</span> eat a big lunch. She <span class="font-bold text-blue-400">eats</span> a salad.</p>
+                                <p>At night, she <span class="font-bold text-blue-400">is</span> tired. She <span class="font-bold text-blue-400">watches</span> TV.</p>
+                            </div>
+
+                            <div class="mt-12 flex justify-center">
+                                <button onclick="document.getElementById('emma-speak-2').classList.remove('hidden')" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition">
+                                    Reveal Follow-up
+                                </button>
+                            </div>
+
+                            <div id="emma-speak-2" class="hidden mt-6 text-center text-xl text-emerald-400 font-bold fade-in">
+                                "What about you? Do you eat a big lunch? Are you tired at night?"
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+
+            // ==========================================
+            // ANALYSIS (Steps 11-12)
+            // ==========================================
+            {
+                title: "Analysis: States",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-pink-900/40 to-slate-950 slide-up p-8 overflow-y-auto">
+                        <h2 class="text-3xl font-bold mb-2 text-white mt-10 md:mt-0">Grammar Analysis: <span class="text-pink-400">States (To Be)</span></h2>
+                        <p class="text-gray-400 mb-8">Click the "To Be" verbs to see what they mean.</p>
+                        
+                        <div class="max-w-3xl w-full space-y-4 text-xl md:text-2xl">
+                            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4">
+                                <span class="text-gray-300">I <button onclick="showAnalysis('an-1', 'State: Identity')" class="mx-2 px-4 py-1 bg-pink-500/20 text-pink-400 font-bold rounded hover:bg-pink-500/40 transition border border-pink-500/50">am</button> Emma.</span>
+                                <span id="an-1" class="text-pink-400 text-lg font-bold hidden fade-in bg-pink-900/20 px-4 py-2 rounded-lg border border-pink-500/30">Identity</span>
+                            </div>
+                            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4">
+                                <span class="text-gray-300">I <button onclick="showAnalysis('an-2', 'State: Age')" class="mx-2 px-4 py-1 bg-pink-500/20 text-pink-400 font-bold rounded hover:bg-pink-500/40 transition border border-pink-500/50">am</button> 28 years old.</span>
+                                <span id="an-2" class="text-pink-400 text-lg font-bold hidden fade-in bg-pink-900/20 px-4 py-2 rounded-lg border border-pink-500/30">Age</span>
+                            </div>
+                            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4">
+                                <span class="text-gray-300">She <button onclick="showAnalysis('an-3', 'State: Feeling')" class="mx-2 px-4 py-1 bg-pink-500/20 text-pink-400 font-bold rounded hover:bg-pink-500/40 transition border border-pink-500/50">is</button> tired.</span>
+                                <span id="an-3" class="text-pink-400 text-lg font-bold hidden fade-in bg-pink-900/20 px-4 py-2 rounded-lg border border-pink-500/30">Feeling / Condition</span>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Analysis: Actions",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-cyan-900/40 to-slate-950 slide-up p-8 overflow-y-auto">
+                        <h2 class="text-3xl font-bold mb-2 text-white mt-10 md:mt-0">Grammar Analysis: <span class="text-cyan-400">Actions (Simple Present)</span></h2>
+                        <p class="text-gray-400 mb-8">Click the verbs to analyze the routine.</p>
+                        
+                        <div class="max-w-3xl w-full space-y-4 text-xl md:text-2xl">
+                            <div class="bg-slate-800 p-6 rounded-xl border border-cyan-700/30 flex flex-col md:flex-row items-center justify-between gap-4">
+                                <span class="text-gray-300 text-center md:text-left">I <button onclick="showAnalysis('an-4', 'Action: Habit')" class="mx-2 px-4 py-1 bg-cyan-500/20 text-cyan-400 font-bold rounded hover:bg-cyan-500/40 transition border border-cyan-500/50">drink</button> tea.</span>
+                                <span id="an-4" class="text-cyan-400 text-lg font-bold hidden fade-in bg-cyan-900/20 px-4 py-2 rounded-lg border border-cyan-500/30">Habit</span>
+                            </div>
+                            <div class="bg-slate-800 p-6 rounded-xl border border-cyan-700/30 flex flex-col md:flex-row items-center justify-between gap-4">
+                                <span class="text-gray-300 text-center md:text-left">She <button onclick="showAnalysis('an-5', 'Routine<br><span class=\\'text-sm text-yellow-400\\'>+S for She</span>')" class="mx-2 px-4 py-1 bg-cyan-500/20 text-cyan-400 font-bold rounded hover:bg-cyan-500/40 transition border border-cyan-500/50">starts</button> work at 9.</span>
+                                <span id="an-5" class="text-cyan-400 text-lg font-bold hidden fade-in text-center md:text-right bg-cyan-900/20 px-4 py-2 rounded-lg border border-cyan-500/30"></span>
+                            </div>
+                            <div class="bg-slate-800 p-6 rounded-xl border border-cyan-700/30 flex flex-col md:flex-row items-center justify-between gap-4">
+                                <span class="text-gray-300 text-center md:text-left">She <button onclick="showAnalysis('an-6', 'Negative Habit<br><span class=\\'text-sm text-yellow-400\\'>Use does not</span>')" class="mx-2 px-4 py-1 bg-cyan-500/20 text-cyan-400 font-bold rounded hover:bg-cyan-500/40 transition border border-cyan-500/50">does not eat</button> a big lunch.</span>
+                                <span id="an-6" class="text-cyan-400 text-lg font-bold hidden fade-in text-center md:text-right bg-cyan-900/20 px-4 py-2 rounded-lg border border-cyan-500/30"></span>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+
+            // ==========================================
+            // GRAMMAR ENGINEERING (Steps 13-16)
+            // ==========================================
+            {
+                title: "Grammar: To Be (+/-)",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-slate-950 slide-up p-4 md:p-8 overflow-y-auto">
+                        <h2 class="text-3xl font-bold mb-8 text-pink-400 mt-10 md:mt-0">Verb To Be <span class="text-white font-light">| Affirmative & Negative</span></h2>
+                        
+                        <div class="flex flex-col lg:flex-row gap-8 max-w-5xl w-full">
+                            <!-- Affirmative -->
+                            <div class="flex-1 bg-slate-900 border border-slate-700 rounded-2xl p-6 flex flex-col justify-center min-h-[280px]">
+                                <h3 class="text-center text-emerald-400 font-bold mb-6 text-xl"><i class="fas fa-plus-circle mr-2"></i>Affirmative</h3>
+                                <div class="space-y-4 font-mono text-lg mx-auto w-full max-w-xs">
+                                    <div class="flex justify-between border-b border-slate-800 pb-2"><span class="text-gray-400">I</span> <span class="text-pink-400 font-bold">am</span></div>
+                                    <div class="flex justify-between border-b border-slate-800 pb-2"><span class="text-gray-400">You</span> <span class="text-pink-400 font-bold">are</span></div>
+                                    <div class="flex justify-between bg-slate-800/80 p-3 rounded-lg border border-slate-600 shadow-md"><span class="text-gray-200 font-bold">He/She/It</span> <span class="text-pink-400 font-bold">is</span></div>
+                                    <div class="flex justify-between pt-2"><span class="text-gray-400">We/They</span> <span class="text-pink-400 font-bold">are</span></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Negative -->
+                            <div class="flex-1 bg-slate-900 border border-slate-700 rounded-2xl p-6 relative flex flex-col justify-center min-h-[280px]">
+                                <h3 class="text-center text-red-400 font-bold mb-6 text-xl"><i class="fas fa-minus-circle mr-2"></i>Negative</h3>
+                                <div class="space-y-4 font-mono text-lg opacity-20 transition duration-500 mx-auto w-full max-w-xs" id="neg-block-1">
+                                    <div class="flex justify-between border-b border-slate-800 pb-2"><span class="text-gray-400">I</span> <span class="text-red-400 font-bold">am not</span></div>
+                                    <div class="flex justify-between border-b border-slate-800 pb-2"><span class="text-gray-400">You</span> <span class="text-red-400 font-bold">are not</span></div>
+                                    <div class="flex justify-between bg-slate-800/80 p-3 rounded-lg border border-slate-600 shadow-md"><span class="text-gray-200 font-bold">He/She/It</span> <span class="text-red-400 font-bold">isn't</span></div>
+                                    <div class="flex justify-between pt-2"><span class="text-gray-400">We/They</span> <span class="text-red-400 font-bold">aren't</span></div>
+                                </div>
+                                <button onclick="document.getElementById('neg-block-1').classList.remove('opacity-20'); this.style.display='none';" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-8 py-4 bg-white text-black font-black text-xl rounded-full hover:bg-gray-200 transition shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                                    Reveal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Grammar: To Be (?)",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-slate-950 slide-up p-8">
+                        <h2 class="text-3xl font-bold mb-8 text-pink-400">Verb To Be <span class="text-white font-light">| Questions</span></h2>
+                        
+                        <div class="max-w-4xl w-full bg-slate-900 border border-slate-700 rounded-3xl p-10 text-center">
+                            <p class="text-gray-400 text-xl mb-6">To make a question, <span class="text-white font-bold">invert</span> the verb and the person.</p>
+                            
+                            <div class="flex items-center justify-center space-x-8 text-4xl font-light mb-10">
+                                <div class="flex flex-col items-center">
+                                    <span class="text-gray-500 text-sm mb-2">Affirmative</span>
+                                    <div><span class="text-white">You</span> <span class="text-pink-400 font-bold">are</span> <span class="text-gray-400">tired.</span></div>
+                                </div>
+                                <i class="fas fa-exchange-alt text-emerald-500 text-2xl"></i>
+                                <div class="flex flex-col items-center">
+                                    <span class="text-emerald-500 text-sm mb-2 font-bold">Question</span>
+                                    <div><span class="text-pink-400 font-bold">Are</span> <span class="text-white">you</span> <span class="text-gray-400">tired?</span></div>
+                                </div>
+                            </div>
+
+                            <button onclick="document.getElementById('to-be-q-speak').classList.remove('hidden')" class="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/50 rounded-full font-bold transition">
+                                Practice Time
+                            </button>
+
+                            <div id="to-be-q-speak" class="hidden mt-8 text-2xl text-white font-light fade-in">
+                                <span class="text-pink-400 font-bold">Are</span> you happy today? <br>
+                                <span class="text-pink-400 font-bold">Is</span> English difficult?
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Grammar: Present (+/-)",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-slate-950 slide-up p-4 md:p-8 overflow-y-auto">
+                        <h2 class="text-3xl font-bold mb-8 text-cyan-400 mt-10 md:mt-0">Simple Present <span class="text-white font-light">| Affirmative & Negative</span></h2>
+                        
+                        <div class="flex flex-col lg:flex-row gap-8 max-w-5xl w-full">
+                            <!-- Affirmative -->
+                            <div class="flex-1 bg-slate-900 border border-slate-700 rounded-2xl p-6 flex flex-col justify-center min-h-[250px]">
+                                <h3 class="text-center text-emerald-400 font-bold mb-6 text-xl"><i class="fas fa-plus-circle mr-2"></i>Affirmative</h3>
+                                <div class="space-y-6 text-xl">
+                                    <div class="flex flex-col md:flex-row items-center justify-between border-b border-slate-800 pb-4 gap-2">
+                                        <span class="text-gray-300">I / You / We / They</span>
+                                        <span class="text-cyan-400 font-bold bg-cyan-900/30 px-4 py-2 rounded-lg border border-cyan-500/30">work</span>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-center justify-between pt-2 gap-2">
+                                        <span class="text-gray-200 font-bold bg-slate-800 px-4 py-2 rounded-lg border border-slate-600">He / She / It</span>
+                                        <div class="text-center md:text-right">
+                                            <span class="text-cyan-400 font-bold bg-cyan-900/30 px-4 py-2 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20">work<span class="text-yellow-400">s</span></span>
+                                            <p class="text-xs text-yellow-400 mt-2 font-mono">Add 's' for 3rd person!</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Negative -->
+                            <div class="flex-1 bg-slate-900 border border-slate-700 rounded-2xl p-6 relative flex flex-col justify-center min-h-[250px]">
+                                <h3 class="text-center text-red-400 font-bold mb-6 text-xl"><i class="fas fa-minus-circle mr-2"></i>Negative</h3>
+                                <div class="space-y-6 text-xl opacity-20 transition duration-500" id="neg-block-2">
+                                     <div class="flex flex-col md:flex-row items-center justify-between border-b border-slate-800 pb-4 gap-2">
+                                        <span class="text-gray-300">I / You / We / They</span>
+                                        <span class="text-red-400 font-bold bg-red-900/20 px-4 py-2 rounded-lg border border-red-500/30">don't <span class="text-cyan-400">work</span></span>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-center justify-between pt-2 gap-2">
+                                        <span class="text-gray-200 font-bold bg-slate-800 px-4 py-2 rounded-lg border border-slate-600">He / She / It</span>
+                                        <div class="text-center md:text-right">
+                                            <span class="text-red-400 font-bold bg-red-900/20 px-4 py-2 rounded-lg border border-red-500/30 shadow-lg shadow-red-500/20">doesn't <span class="text-cyan-400">work</span></span>
+                                            <p class="text-xs text-yellow-400 mt-2 font-mono">No 's' on the verb here!</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onclick="document.getElementById('neg-block-2').classList.remove('opacity-20'); this.style.display='none';" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-8 py-4 bg-white text-black font-black text-xl rounded-full hover:bg-gray-200 transition shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                                    Reveal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Grammar: Present (?)",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-slate-950 slide-up p-8">
+                        <h2 class="text-3xl font-bold mb-8 text-cyan-400">Simple Present <span class="text-white font-light">| Questions</span></h2>
+                        
+                        <div class="max-w-4xl w-full bg-slate-900 border border-slate-700 rounded-3xl p-10 text-center">
+                            <p class="text-gray-400 text-xl mb-6">Use <span class="text-emerald-400 font-bold">Do</span> or <span class="text-emerald-400 font-bold">Does</span> as helper words at the beginning.</p>
+                            
+                            <div class="grid grid-cols-2 gap-8 text-2xl font-light mb-10">
+                                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+                                    <div class="text-emerald-400 font-bold mb-2 text-3xl">Do</div>
+                                    <div><span class="text-white">you</span> <span class="text-cyan-400">drink</span> <span class="text-gray-400">coffee?</span></div>
+                                </div>
+                                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+                                    <div class="text-emerald-400 font-bold mb-2 text-3xl">Does</div>
+                                    <div><span class="text-white">she</span> <span class="text-cyan-400">drink</span> <span class="text-gray-400">coffee?</span></div>
+                                </div>
+                            </div>
+
+                            <button onclick="document.getElementById('pres-q-speak').classList.remove('hidden')" class="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/50 rounded-full font-bold transition">
+                                Practice Time
+                            </button>
+
+                            <div id="pres-q-speak" class="hidden mt-8 text-2xl text-white font-light fade-in">
+                                <span class="text-emerald-400 font-bold">Do</span> you study English every day? <br>
+                                <span class="text-emerald-400 font-bold">Does</span> your mother work?
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+
+            // ==========================================
+            // DRILL SYSTEM (Steps 17-22)
+            // ==========================================
+            {
+                title: "Drill 1: To Be (+)",
+                content: generateDrill(
+                    "I ___ very happy today.",
+                    [{text: "is", correct: false}, {text: "am", correct: true}, {text: "are", correct: false}],
+                    "Why are you happy today?",
+                    "drill-1"
+                )
+            },
+            {
+                title: "Drill 2: To Be (-)",
+                content: generateDrill(
+                    "She ___ tired. She has a lot of energy.",
+                    [{text: "is not", correct: true}, {text: "am not", correct: false}, {text: "are not", correct: false}],
+                    "Do you have a lot of energy today?",
+                    "drill-2"
+                )
+            },
+            {
+                title: "Drill 3: To Be (?)",
+                content: generateDrill(
+                    "___ you a student?",
+                    [{text: "Is", correct: false}, {text: "Am", correct: false}, {text: "Are", correct: true}],
+                    "What do you study? Do you like it?",
+                    "drill-3"
+                )
+            },
+            {
+                title: "Drill 4: Present (+)",
+                content: generateDrill(
+                    "I ___ coffee every morning.",
+                    [{text: "drink", correct: true}, {text: "drinks", correct: false}, {text: "drinking", correct: false}],
+                    "What time do you usually drink it?",
+                    "drill-4"
+                )
+            },
+            {
+                title: "Drill 5: Present (He/She)",
+                content: generateDrill(
+                    "My brother ___ early on weekends.",
+                    [{text: "wake up", correct: false}, {text: "wakes up", correct: true}, {text: "is wake up", correct: false}],
+                    "Do you wake up early on weekends?",
+                    "drill-5"
+                )
+            },
+            {
+                title: "Drill 6: Present (?)",
+                content: generateDrill(
+                    "___ you watch TV at night?",
+                    [{text: "Are", correct: false}, {text: "Does", correct: false}, {text: "Do", correct: true}],
+                    "What is your favorite TV show?",
+                    "drill-6"
+                )
+            },
+
+            // ==========================================
+            // TRANSFORMATION CARDS (Steps 23-24)
+            // ==========================================
+            {
+                title: "Transform: Negative",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-slate-950 slide-up p-8">
+                        <h2 class="text-3xl font-bold mb-12 text-white">Make it <span class="text-red-400">Negative</span></h2>
+                        
+                        <div class="max-w-2xl w-full text-center space-y-8">
+                            <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700 text-3xl font-light text-gray-300">
+                                "I wake up at 6:00 AM."
+                            </div>
+                            
+                            <i class="fas fa-arrow-down text-2xl text-slate-600"></i>
+
+                            <button onclick="document.getElementById('trans-1-res').classList.remove('hidden'); this.style.display='none'" class="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full font-bold text-xl transition">
+                                Reveal Answer
+                            </button>
+
+                            <div id="trans-1-res" class="hidden bg-slate-900 p-8 rounded-2xl border-2 border-emerald-500 text-3xl font-bold text-white fade-in shadow-[0_0_20px_rgba(29,185,84,0.3)]">
+                                I <span class="text-red-400">don't</span> wake up at 6:00 AM.
+                                <div class="mt-6 pt-6 border-t border-slate-800 text-xl text-emerald-400 font-normal">
+                                    Speak: "What time DO you wake up?"
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Transform: Question",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-slate-950 slide-up p-8">
+                        <h2 class="text-3xl font-bold mb-12 text-white">Make a <span class="text-emerald-400">Question</span></h2>
+                        
+                        <div class="max-w-2xl w-full text-center space-y-8">
+                            <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700 text-3xl font-light text-gray-300">
+                                "She likes pizza."
+                            </div>
+                            
+                            <i class="fas fa-arrow-down text-2xl text-slate-600"></i>
+
+                            <button onclick="document.getElementById('trans-2-res').classList.remove('hidden'); this.style.display='none'" class="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full font-bold text-xl transition">
+                                Reveal Answer
+                            </button>
+
+                            <div id="trans-2-res" class="hidden bg-slate-900 p-8 rounded-2xl border-2 border-emerald-500 text-3xl font-bold text-white fade-in shadow-[0_0_20px_rgba(29,185,84,0.3)]">
+                                <span class="text-emerald-400">Does</span> she <span class="text-cyan-400">like</span> pizza?
+                                <div class="mt-6 pt-6 border-t border-slate-800 text-xl text-emerald-400 font-normal">
+                                    Speak: "Do YOU like pizza? What is your favorite food?"
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+
+            // ==========================================
+            // SPEAKING ARENA (Steps 25-31)
+            // ==========================================
+            {
+                title: "Speaking: Identity",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-orange-900/40 to-slate-950 slide-up p-8">
+                        <div class="text-emerald-400 tracking-widest text-sm font-bold mb-4 uppercase"><i class="fas fa-microphone mr-2"></i> Speaking Arena</div>
+                        <h2 class="text-5xl font-black mb-12 text-white">Who are you?</h2>
+                        
+                        <div class="max-w-3xl w-full grid grid-cols-2 gap-6">
+                            <div class="bg-slate-900/80 p-6 rounded-2xl border border-white/10 flex flex-col justify-center">
+                                <span class="text-gray-400 text-sm mb-2">Name</span>
+                                <span class="text-2xl text-white font-light">I am...</span>
+                            </div>
+                            <div class="bg-slate-900/80 p-6 rounded-2xl border border-white/10 flex flex-col justify-center">
+                                <span class="text-gray-400 text-sm mb-2">Profession</span>
+                                <span class="text-2xl text-white font-light">I am a...</span>
+                            </div>
+                            <div class="bg-slate-900/80 p-6 rounded-2xl border border-white/10 flex flex-col justify-center">
+                                <span class="text-gray-400 text-sm mb-2">Feeling today</span>
+                                <span class="text-2xl text-white font-light">Today, I am...</span>
+                            </div>
+                            <div class="bg-slate-900/80 p-6 rounded-2xl border border-white/10 flex flex-col justify-center">
+                                <span class="text-gray-400 text-sm mb-2">Origin</span>
+                                <span class="text-2xl text-white font-light">I am from...</span>
+                            </div>
+                        </div>
+
+                        <p class="mt-12 text-gray-400 text-center max-w-lg">
+                            Teacher: Give the student time. Let them read the prompts and complete the sentences. Praise clearly!
+                        </p>
+                    </div>
+                `
+            },
+            {
+                title: "Speaking: Routine",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-orange-900/40 to-slate-950 slide-up p-8">
+                        <div class="text-emerald-400 tracking-widest text-sm font-bold mb-4 uppercase"><i class="fas fa-microphone mr-2"></i> Speaking Arena</div>
+                        <h2 class="text-5xl font-black mb-12 text-white">Your Morning</h2>
+                        
+                        <div class="max-w-4xl w-full space-y-6">
+                            <div class="flex items-center gap-6 bg-slate-900/80 p-6 rounded-2xl border border-white/10">
+                                <div class="w-16 h-16 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center text-3xl">🌅</div>
+                                <div class="flex-1 text-2xl text-white font-light">I wake up at <span class="border-b-2 border-emerald-500 px-4 text-emerald-400">_________</span>.</div>
+                            </div>
+                            <div class="flex items-center gap-6 bg-slate-900/80 p-6 rounded-2xl border border-white/10">
+                                <div class="w-16 h-16 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center text-3xl">☕</div>
+                                <div class="flex-1 text-2xl text-white font-light">In the morning, I drink <span class="border-b-2 border-emerald-500 px-4 text-emerald-400">_________</span>.</div>
+                            </div>
+                            <div class="flex items-center gap-6 bg-slate-900/80 p-6 rounded-2xl border border-white/10">
+                                <div class="w-16 h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center text-3xl">💼</div>
+                                <div class="flex-1 text-2xl text-white font-light">I start work at <span class="border-b-2 border-emerald-500 px-4 text-emerald-400">_________</span>.</div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Spectrum: Mornings",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-slate-950 slide-up p-8">
+                        <h2 class="text-4xl font-bold mb-16 text-white text-center">"I love mornings. I have a lot of energy."</h2>
+                        
+                        <div class="w-full max-w-4xl flex justify-between items-center mb-12 relative">
+                            <div class="absolute left-0 right-0 h-2 bg-slate-800 rounded-full z-0 top-1/2 -translate-y-1/2"></div>
+                            
+                            <button onclick="selectSpectrum(this, 'Why do you disagree? Are you tired in the morning?')" class="z-10 bg-slate-900 border-2 border-red-500 text-red-400 px-6 py-3 rounded-full font-bold hover:bg-red-500 hover:text-white transition">
+                                Disagree
+                            </button>
+                            <button onclick="selectSpectrum(this, 'You are in the middle! Do you need coffee first?')" class="z-10 bg-slate-900 border-2 border-yellow-500 text-yellow-400 px-6 py-3 rounded-full font-bold hover:bg-yellow-500 hover:text-black transition">
+                                Sometimes
+                            </button>
+                            <button onclick="selectSpectrum(this, 'Great! What do you do with your energy?')" class="z-10 bg-slate-900 border-2 border-green-500 text-green-400 px-6 py-3 rounded-full font-bold hover:bg-green-500 hover:text-white transition">
+                                Agree
+                            </button>
+                        </div>
+
+                        <div id="spectrum-res" class="hidden text-2xl text-emerald-400 font-bold text-center mt-8 p-6 bg-slate-900 rounded-2xl border border-emerald-500/30 w-full max-w-2xl fade-in">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Spectrum: TV",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-slate-950 slide-up p-8">
+                        <h2 class="text-4xl font-bold mb-16 text-white text-center">"I watch TV every night."</h2>
+                        
+                        <div class="w-full max-w-4xl flex justify-between items-center mb-12 relative">
+                            <div class="absolute left-0 right-0 h-2 bg-slate-800 rounded-full z-0 top-1/2 -translate-y-1/2"></div>
+                            
+                            <button onclick="selectSpectrum(this, 'What do you do? Do you read? Do you use your phone?')" class="z-10 bg-slate-900 border-2 border-red-500 text-red-400 px-6 py-3 rounded-full font-bold hover:bg-red-500 hover:text-white transition">
+                                Disagree
+                            </button>
+                            <button onclick="selectSpectrum(this, 'What do you watch sometimes?')" class="z-10 bg-slate-900 border-2 border-yellow-500 text-yellow-400 px-6 py-3 rounded-full font-bold hover:bg-yellow-500 hover:text-black transition">
+                                Sometimes
+                            </button>
+                            <button onclick="selectSpectrum(this, 'What is your favorite show/movie?')" class="z-10 bg-slate-900 border-2 border-green-500 text-green-400 px-6 py-3 rounded-full font-bold hover:bg-green-500 hover:text-white transition">
+                                Agree
+                            </button>
+                        </div>
+
+                        <div id="spectrum-res" class="hidden text-2xl text-emerald-400 font-bold text-center mt-8 p-6 bg-slate-900 rounded-2xl border border-emerald-500/30 w-full max-w-2xl fade-in">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Decision Tree: Weekend",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-slate-950 slide-up p-8">
+                        <h2 class="text-4xl font-bold mb-8 text-white">It is Saturday morning.</h2>
+                        <p class="text-gray-400 mb-12 text-xl">What do you do?</p>
+
+                        <div class="flex gap-6 w-full max-w-4xl">
+                            <button onclick="showDecision('I stay in bed. I sleep until 10:00 AM.', 'Are you tired on weekends?')" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 p-8 rounded-2xl transition group">
+                                <div class="text-5xl mb-4">🛏️</div>
+                                <div class="text-xl text-white font-bold group-hover:text-emerald-400 transition">Stay in bed</div>
+                            </button>
+                            <button onclick="showDecision('I wake up early. I go to the park.', 'Do you like to exercise on Saturday?')" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 p-8 rounded-2xl transition group">
+                                <div class="text-5xl mb-4">🌳</div>
+                                <div class="text-xl text-white font-bold group-hover:text-emerald-400 transition">Go outside</div>
+                            </button>
+                        </div>
+
+                        <div id="decision-res" class="hidden mt-12 w-full max-w-4xl text-center fade-in">
+                            <div id="decision-text" class="text-3xl font-light text-white mb-4"></div>
+                            <div id="decision-follow" class="text-xl font-bold text-emerald-400 bg-emerald-900/20 p-4 rounded-xl inline-block border border-emerald-500/30"></div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Roleplay: Setup",
+                content: `
+                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-900/40 to-slate-950 slide-up p-8">
+                        <div class="max-w-4xl w-full flex bg-slate-900 rounded-3xl overflow-hidden border border-indigo-500/30 shadow-2xl">
+                            <div class="w-1/2 p-12 bg-indigo-900/20 flex flex-col justify-center">
+                                <i class="fas fa-user-friends text-6xl text-indigo-400 mb-6"></i>
+                                <h2 class="text-4xl font-black text-white mb-4">Roleplay</h2>
+                                <p class="text-xl text-indigo-200 font-light">You are at a café. You meet a new person.</p>
+                                <p class="text-lg text-gray-400 mt-6">Goal: Ask 3 questions to know the person.</p>
+                            </div>
+                            <div class="w-1/2 p-12 flex flex-col justify-center space-y-6">
+                                <h3 class="text-gray-400 font-bold uppercase text-sm tracking-wider">Your toolkit:</h3>
+                                <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                                    <span class="text-pink-400 font-bold text-lg">Are you...?</span>
+                                </div>
+                                <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                                    <span class="text-cyan-400 font-bold text-lg">Do you...?</span>
+                                </div>
+                                <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                                    <span class="text-emerald-400 font-bold text-lg">Where are you from?</span>
+                                </div>
+                                <button onclick="nextSlide()" class="mt-4 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold transition">
+                                    Start Conversation <i class="fas fa-play ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Roleplay: Action",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-slate-950 slide-up p-8 relative">
+                        <!-- Cafe background blurry -->
+                        <div class="absolute inset-0 z-0 opacity-20">
+                            <img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=1600" class="w-full h-full object-cover">
+                        </div>
+                        
+                        <div class="z-10 w-full max-w-4xl flex flex-col gap-6">
+                            <!-- Teacher bubble -->
+                            <div class="self-start bg-slate-800 p-6 rounded-2xl rounded-tl-none border border-slate-700 max-w-lg shadow-xl">
+                                <p class="text-xl text-white font-light">"Hi! Nice to meet you. I am the teacher (playing a stranger). What is your name?"</p>
+                            </div>
+                            
+                            <!-- Student bubble helper -->
+                            <div class="self-end bg-emerald-900/40 p-6 rounded-2xl rounded-tr-none border border-emerald-500/30 max-w-lg shadow-xl text-right group hover:bg-emerald-900/60 transition cursor-pointer">
+                                <p class="text-sm text-emerald-400 mb-2 uppercase font-bold tracking-wider">Student Turn</p>
+                                <p class="text-xl text-white font-light">"Hello. I am..." <br><span class="text-gray-400 text-base mt-2 block">(Ask a question back: Are you...? Do you...?)</span></p>
+                            </div>
+
+                            <div class="mt-12 text-center">
+                                <button onclick="document.getElementById('rp-hints').classList.toggle('hidden')" class="text-gray-400 hover:text-white underline text-sm">Need a hint?</button>
+                                <div id="rp-hints" class="hidden mt-4 flex gap-4 justify-center">
+                                    <span class="px-4 py-2 bg-slate-800 rounded text-cyan-400">Do you live here?</span>
+                                    <span class="px-4 py-2 bg-slate-800 rounded text-pink-400">Are you a student?</span>
+                                    <span class="px-4 py-2 bg-slate-800 rounded text-emerald-400">Do you like coffee?</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+
+            // ==========================================
+            // WRAP-UP (Steps 32-34)
+            // ==========================================
+            {
+                title: "Review Checklist",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-slate-950 slide-up p-8">
+                        <h2 class="text-4xl font-bold mb-12 text-white">What did we learn today?</h2>
+                        
+                        <div class="max-w-3xl w-full space-y-4">
+                            <div class="bg-slate-900 p-6 rounded-2xl border border-emerald-500/50 flex items-center gap-6">
+                                <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl"><i class="fas fa-check"></i></div>
+                                <div class="text-2xl text-gray-200 font-light">Introduce yourself (I <span class="font-bold text-white">am</span>)</div>
+                            </div>
+                            <div class="bg-slate-900 p-6 rounded-2xl border border-emerald-500/50 flex items-center gap-6">
+                                <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl"><i class="fas fa-check"></i></div>
+                                <div class="text-2xl text-gray-200 font-light">Talk about your routine (I <span class="font-bold text-white">wake up</span>, I <span class="font-bold text-white">drink</span> coffee)</div>
+                            </div>
+                            <div class="bg-slate-900 p-6 rounded-2xl border border-emerald-500/50 flex items-center gap-6">
+                                <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl"><i class="fas fa-check"></i></div>
+                                <div class="text-2xl text-gray-200 font-light">Ask questions (<span class="font-bold text-white">Are</span> you...? <span class="font-bold text-white">Do</span> you...?)</div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Confidence Check",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-black slide-up p-8">
+                        <h2 class="text-4xl font-bold mb-12 text-center text-white">How do you feel about your English today?</h2>
+                        
+                        <div class="w-full max-w-2xl bg-slate-800/50 p-8 rounded-3xl border border-white/10 backdrop-blur-md">
+                            <div class="flex justify-between text-4xl mb-6">
+                                <span>😕</span>
+                                <span>🙂</span>
+                                <span>💪</span>
+                            </div>
+                            <input type="range" min="1" max="3" value="2" class="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500" 
+                                oninput="document.getElementById('conf-result').innerText = this.value == 1 ? 'It is normal! Step by step.' : (this.value == 2 ? 'Good job! You are improving.' : 'Amazing! You are very confident!'); document.getElementById('conf-speak').classList.remove('hidden');">
+                            
+                            <div class="mt-8 text-center min-h-[60px]">
+                                <p id="conf-result" class="text-2xl font-bold text-emerald-400"></p>
+                            </div>
+                        </div>
+
+                        <div id="conf-speak" class="hidden mt-8 p-6 bg-emerald-900/30 border border-emerald-500/50 rounded-xl max-w-2xl w-full text-center fade-in">
+                            <p class="text-xl text-white font-light">"You did a great job today. I am proud of you!"</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "End Cover",
+                content: `
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1DB954] via-[#0f3b20] to-[#020617] slide-up">
+                        <div class="text-center">
+                            <i class="fas fa-check-circle text-6xl text-white mb-6 drop-shadow-lg"></i>
+                            <h1 class="text-6xl md:text-8xl font-black text-white mb-6 tracking-tight shadow-black drop-shadow-2xl">
+                                GREAT JOB!
+                            </h1>
+                            <p class="text-2xl text-emerald-100 font-light">Session Complete.</p>
+                            
+                            <div class="mt-12 text-emerald-200 text-sm font-bold tracking-widest uppercase">
+                                WOLF LABS | MAIN SERIES
+                            </div>
+                        </div>
+                    </div>
+                `
+            }
+        ];
+
+        // ==========================================
+        // SYSTEM LOGIC
+        // ==========================================
+        let currentStep = 0;
+        const totalSteps = slides.length;
+
+        function init() {
+            renderNavLinks();
+            renderSlide(currentStep);
+            updateProgress();
+        }
+
+        function renderSlide(index) {
+            const container = document.getElementById('slide-container');
+            container.innerHTML = slides[index].content;
+        }
+
+        function nextSlide() {
+            if (currentStep < totalSteps - 1) {
+                currentStep++;
+                renderSlide(currentStep);
+                updateProgress();
+                updateNavHighlight();
+            }
+        }
+
+        function prevSlide() {
+            if (currentStep > 0) {
+                currentStep--;
+                renderSlide(currentStep);
+                updateProgress();
+                updateNavHighlight();
+            }
+        }
+
+        function jumpToSlide(index) {
+            currentStep = index;
+            renderSlide(currentStep);
+            updateProgress();
+            updateNavHighlight();
+            if(window.innerWidth < 1024) toggleSidebar(); // auto close on mobile
+        }
+
+        function updateProgress() {
+            document.getElementById('step-counter').innerText = `${currentStep + 1}/${totalSteps}`;
+            const percentage = ((currentStep + 1) / totalSteps) * 100;
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+
+        function toggleTeacherBoard() {
+            const board = document.getElementById('teacher-board');
+            board.classList.toggle('translate-x-full');
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        function renderNavLinks() {
+            const navContainer = document.getElementById('nav-links');
+            let html = '<ul class="space-y-1">';
+            slides.forEach((slide, index) => {
+                let badge = '';
+                if(slide.title.startsWith('TG')) badge = '<span class="text-[10px] bg-slate-700 px-1 rounded ml-2">Guide</span>';
+                if(slide.title.startsWith('Speaking')) badge = '<span class="text-[10px] bg-orange-600 px-1 rounded ml-2">Speak</span>';
+                if(slide.title.startsWith('Drill')) badge = '<span class="text-[10px] bg-blue-600 px-1 rounded ml-2">Drill</span>';
+
+                html += `
+                    <li>
+                        <button id="nav-btn-${index}" onclick="jumpToSlide(${index})" class="w-full text-left px-3 py-2 rounded text-sm text-gray-400 hover:bg-white/10 hover:text-white transition flex justify-between items-center">
+                            <span class="truncate">${index + 1}. ${slide.title}</span>
+                            ${badge}
+                        </button>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            navContainer.innerHTML = html;
+            updateNavHighlight();
+        }
+
+        function updateNavHighlight() {
+            for(let i=0; i<totalSteps; i++) {
+                const btn = document.getElementById(`nav-btn-${i}`);
+                if(btn) {
+                    if(i === currentStep) {
+                        btn.classList.add('bg-emerald-900/30', 'text-emerald-400', 'border-l-2', 'border-emerald-500');
+                        btn.classList.remove('text-gray-400', 'hover:bg-white/10');
+                    } else {
+                        btn.classList.remove('bg-emerald-900/30', 'text-emerald-400', 'border-l-2', 'border-emerald-500');
+                        btn.classList.add('text-gray-400', 'hover:bg-white/10');
+                    }
+                }
+            }
+        }
+
+        // ==========================================
+        // COMPONENT GENERATORS & LOGIC
+        // ==========================================
+
+        function generateFlipCard(emoji, text, followUp) {
+            return `
+                <div class="perspective-1000 h-48 cursor-pointer group" onclick="this.querySelector('.inner').classList.toggle('rotate-y-180')">
+                    <div class="inner relative w-full h-full transform-style-3d transition duration-500">
+                        <!-- Front -->
+                        <div class="absolute w-full h-full backface-hidden bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:border-emerald-500/50 transition">
+                            <span class="text-6xl">${emoji}</span>
+                        </div>
+                        <!-- Back -->
+                        <div class="absolute w-full h-full backface-hidden rotate-y-180 bg-emerald-800/90 rounded-2xl flex flex-col items-center justify-center text-center p-4 shadow-lg border border-emerald-500">
+                            <span class="text-2xl font-bold text-white mb-3">${text}</span>
+                            <span class="text-xs text-emerald-200 font-bold uppercase tracking-wider bg-black/30 px-3 py-1.5 rounded-md">Ask: ${followUp}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectMood(btn, text, followUp) {
+            // Remove active state from all cards
+            const cards = document.querySelectorAll('.mood-card');
+            cards.forEach(c => {
+                c.classList.remove('bg-emerald-900/50', 'border-emerald-500', 'ring-2', 'ring-emerald-500');
+            });
+            // Add active state to clicked
+            btn.classList.add('bg-emerald-900/50', 'border-emerald-500', 'ring-2', 'ring-emerald-500');
+
+            // Update text
+            document.getElementById('mood-result').innerText = text;
+            document.getElementById('mood-followup').innerText = '"' + followUp + '"';
+            document.getElementById('mood-speak').classList.remove('hidden');
+        }
+
+        function revealChoice(id, text) {
+            document.getElementById(id + '-text').innerText = text;
+            document.getElementById(id + '-result').classList.remove('hidden');
+        }
+
+        function showAnalysis(id, title) {
+            const el = document.getElementById(id);
+            el.innerHTML = title;
+            el.classList.remove('hidden');
+        }
+
+        function generateDrill(question, options, followUp, id) {
+            let optsHtml = options.map((opt, i) => `
+                <button onclick="checkDrill(this, ${opt.correct}, '${id}')" class="flex-1 bg-slate-800 border-2 border-slate-700 hover:border-emerald-500 p-4 rounded-xl text-xl font-bold transition">
+                    ${opt.text}
+                </button>
+            `).join('');
+
+            return `
+                <div class="w-full h-full flex flex-col items-center justify-center bg-slate-950 slide-up p-8">
+                    <h2 class="text-xl text-gray-500 font-bold uppercase tracking-wider mb-8">Drill Arena</h2>
+                    
+                    <div class="w-full max-w-3xl text-center">
+                        <div class="text-4xl font-light text-white mb-12 bg-slate-900 p-8 rounded-2xl border border-slate-800 shadow-2xl">
+                            ${question}
+                        </div>
+                        
+                        <div class="flex gap-4 w-full" id="${id}-options">
+                            ${optsHtml}
+                        </div>
+
+                        <div id="${id}-follow" class="hidden mt-12 p-6 bg-emerald-900/20 border border-emerald-500/50 rounded-2xl fade-in text-center">
+                            <span class="text-emerald-400 font-bold text-sm uppercase tracking-widest block mb-2">Speaking Starter</span>
+                            <span class="text-2xl text-white font-light">"${followUp}"</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function checkDrill(btn, isCorrect, id) {
+            // Disable all buttons in this group
+            const container = document.getElementById(`${id}-options`);
+            const buttons = container.querySelectorAll('button');
+            buttons.forEach(b => {
+                b.disabled = true;
+                b.classList.add('opacity-50', 'cursor-not-allowed');
+            });
+
+            if (isCorrect) {
+                btn.classList.remove('bg-slate-800', 'border-slate-700', 'opacity-50');
+                btn.classList.add('bg-emerald-600', 'border-emerald-400', 'text-white', 'correct-pulse');
+                document.getElementById(`${id}-follow`).classList.remove('hidden');
+            } else {
+                btn.classList.remove('bg-slate-800', 'border-slate-700');
+                btn.classList.add('bg-red-600', 'border-red-400', 'text-white');
+                // Automatically find correct button and show it
+                buttons.forEach(b => {
+                    if(b.getAttribute('onclick').includes('true')) {
+                        b.classList.remove('opacity-50', 'bg-slate-800', 'border-slate-700');
+                        b.classList.add('bg-emerald-600', 'border-emerald-400', 'text-white');
+                    }
+                });
+                // Still show follow up to maintain flow
+                setTimeout(() => {
+                    document.getElementById(`${id}-follow`).classList.remove('hidden');
+                }, 1000);
+            }
+        }
+
+        function selectSpectrum(btn, followUpText) {
+            // Reset others
+            const container = btn.parentElement;
+            const buttons = container.querySelectorAll('button');
+            buttons.forEach(b => {
+                b.classList.remove('transform', 'scale-110', 'shadow-xl');
+                b.style.opacity = '0.5';
+            });
+            
+            // Highlight selected
+            btn.style.opacity = '1';
+            btn.classList.add('transform', 'scale-110', 'shadow-xl');
+
+            // Show result
+            const res = container.nextElementSibling;
+            res.innerText = followUpText;
+            res.classList.remove('hidden');
+        }
+
+        function showDecision(text, followUp) {
+            document.getElementById('decision-text').innerText = text;
+            document.getElementById('decision-follow').innerText = "Teacher Speak: " + followUp;
+            document.getElementById('decision-res').classList.remove('hidden');
+        }
+
+        // Initialize App
+        window.onload = init;
+
+    </script>
+</body>
+</html>
